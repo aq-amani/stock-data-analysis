@@ -7,8 +7,8 @@ from datetime import date, timedelta
 from dateutil.relativedelta import *
 plt.style.use('dark_background')
 
-stock_list = ['AAPL', 'MSFT', 'TSLA', 'KO', 'INTC', 'AMZN', 'AMD', 'PG', 'META', 'NVDA', 'GOOG']
-etf_list = ['VTI', 'QQQ', 'VIG', 'HDV', 'SPYD', 'VYM', 'VOO', 'SPY', 'IVV']
+stock_list = ['AAPL', 'MSFT', 'TSLA', 'KO', 'INTC', 'AMZN', 'AMD', 'PG', 'META', 'NVDA', 'GOOG', 'JNJ', 'MRNA', 'PEP', 'WMT']
+etf_list = ['VTI', 'QQQ', 'VIG', 'HDV', 'SPYD', 'VYM', 'VOO', 'SPY', 'IVV', 'BND', 'AGG', 'TLT']
 # Get JP stock list
 JP_stocks = ['2897.T']
 FX = ['USDJPY=X']
@@ -52,6 +52,12 @@ def get_and_pickle_ticker_history_data(ticker_list, output_file, period='max', i
     """
 
     data = yf.download(ticker_list, period=period, interval=interval)
+    if len(ticker_list) > 1:
+        # Change yfinance data hierarchy from values-> tickers to tickers->values
+        # To be able to index data by ticker name instead of price category (Open, Close..)
+        # Only needed when requesting multiple tickers through yfinance
+        data.columns = data.columns.swaplevel(0, 1)
+        data.sort_index(axis=1, level=0, inplace=True)
     pd.to_pickle(data, output_file)
 
 def plot_all_close_prices(pickle_file_name):

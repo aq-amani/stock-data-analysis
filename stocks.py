@@ -3,6 +3,8 @@ import mplfinance as mpf
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import pandas as pd
+from datetime import date, timedelta
+from dateutil.relativedelta import *
 plt.style.use('dark_background')
 
 stock_list = ['AAPL', 'MSFT', 'TSLA', 'KO', 'INTC', 'AMZN', 'AMD', 'PG', 'META', 'NVDA', 'GOOG']
@@ -156,15 +158,39 @@ def plot_candles_and_delta_pips(data, verbosity, chart_title, recent_point_count
     fig.tight_layout()
     plt.show()
 
-def calculate_growth(data):
-## TODO: make start_end dates specifiable
-    start = int(data['Close'][0])
-    end = int(data['Close'][-1])
-    print(start)
-    print(end)
+def calculate_growth(data, start_datetime, end_datetime):
+    """Calculate percentage of growth between two points in time
+
+    Arguments:
+    data -- datetime indexed dataframe
+    start_datetime -- string of period start datetime (ex.:'2022-01-01 09:00:00')
+    end_datetime -- string of period end datetime
+    """
+    data = data.loc[start_datetime:end_datetime]
+    start = data['Close'][0]
+    end = data['Close'][-1]
     ratio = 100*(end/start)
     growth = -1*(100 - ratio) if ratio < 100 else ratio - 100
-    print(f'{growth}%')
+    return growth
+
+def compare_growth(data):
+    """Calculate percentage of growth within the past years and months calculated from today
+
+    Arguments:
+    data -- datetime indexed dataframe containing ticker price data
+    """
+    # TODO: can be made more dynamic by passing the periods list as an argument
+    ticker_list = list(data.columns.levels[0])
+    growth_data = pd.DataFrame(columns=ticker_list, index=['5y', '3y', '1y', '6mo', '3mo', '1mo'])
+    today = date.today()
+    for ticker in ticker_list:
+        growth_data.loc['5y'][ticker]= calculate_growth(data[ticker], today - relativedelta(years=5), today)
+        growth_data.loc['3y'][ticker]= calculate_growth(data[ticker], today - relativedelta(years=3), today)
+        growth_data.loc['1y'][ticker]= calculate_growth(data[ticker], today - relativedelta(years=1), today)
+        growth_data.loc['6mo'][ticker] = calculate_growth(data[ticker], today - relativedelta(months=6), today)
+        growth_data.loc['3mo'][ticker] = calculate_growth(data[ticker], today - relativedelta(months=3), today)
+        growth_data.loc['1mo'][ticker] = calculate_growth(data[ticker], today - relativedelta(months=1), today)
+    return growth_data
 
 def get_data_by_datetime_range(data, start_datetime, end_datetime):
     """For datetime indexed dataframes. Returns entries in the specified datetime range

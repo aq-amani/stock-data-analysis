@@ -5,6 +5,7 @@ import matplotlib.ticker as ticker
 import pandas as pd
 from datetime import date, timedelta
 from dateutil.relativedelta import *
+import math
 plt.style.use('dark_background')
 
 stock_list = ['AAPL', 'MSFT', 'TSLA', 'KO', 'INTC', 'AMZN', 'AMD', 'PG', 'META', 'NVDA', 'GOOG', 'JNJ', 'MRNA', 'PEP', 'WMT']
@@ -207,6 +208,19 @@ def get_data_by_datetime_range(data, start_datetime, end_datetime):
     end_datetime -- string of range end datetime
     """
     return data.loc[start_datetime:end_datetime]
+
+def plot_growth_comparison(data):
+    """Bar plot for multiple tickers comparing growth over multiple periods
+
+    Arguments:
+    data -- datetime indexed dataframe
+    """
+    ax = data.plot.bar(figsize=(14,8))
+    ax.legend(loc='upper right')
+    max_value = data.max().max()
+    ax.yaxis.set_major_locator(ticker.MultipleLocator( 100 * math.ceil(max_value / 100)/20))
+    ax.grid(axis='y',linestyle='dotted', lw=0.5)
+    plt.show()
 
 #plot_all_close_prices('./data/US_stocks_max.pkl')
 plot_dividend_values('./data/SPYD_dividends.pkl')

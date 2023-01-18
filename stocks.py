@@ -51,8 +51,7 @@ def get_and_pickle_dividends(ticker_list, output_file):
     pd.to_pickle(data, output_file)
 
 def get_and_pickle_ticker_history_data(ticker_list, output_file, period='max', interval='1d'):
-    """To process CSV data obtained from
-    https://jp.investing.com/currencies/usd-jpy-historical-data
+    """Get historical ticker data through yfinance
 
     Arguments:
     ticker_list -- List of tickers of interest
@@ -208,7 +207,7 @@ def plot_growth_comparison(data):
     """Bar plot for multiple tickers comparing growth over multiple periods
 
     Arguments:
-    data -- datetime indexed dataframe
+    data -- datetime indexed dataframe fo growth percentages
     """
     ax = data.plot.bar(figsize=(14,8))
     ax.legend(loc='upper right')

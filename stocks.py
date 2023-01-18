@@ -72,29 +72,16 @@ def get_and_pickle_ticker_history_data(ticker_list, output_file, period='max', i
         data.sort_index(axis=1, level=0, inplace=True)
     pd.to_pickle(data, output_file)
 
-def plot_all_close_prices(pickle_file_name):
-    data = pd.read_pickle(pickle_file_name)
-    data['Close'].plot()
-    plt.show()
-
-def get_single_ticker_data_from_pickle(pickle_file_name, ticker_name):
-    """For data containing multiple US stocks and ETFs that gets stored in multi-level dataframes
-       when obtained through yfinance
+def plot_close_prices_comparison(data):
+    """Plot line multiple candle charts for comparison
 
     Arguments:
-    pickle_file_name -- filename string of the picklefile containing data
-    ticker_name -- name string of the ticker of interest
+    ticker_list -- list of ticker names
+    base_filename -- common part of the filename between tickers
     """
-    data = pd.read_pickle(pickle_file_name)
-    # Change hierarchy from values-> tickers to tickers->values
-    # To index by ticker name instead of price category (Open, Close..)
-    data.columns = data.columns.swaplevel(0, 1)
-    data.sort_index(axis=1, level=0, inplace=True)
-    return data[ticker_name]
-
-def plot_dividend_values(pickle_file_name):
-    data = pd.read_pickle(pickle_file_name)
-    data.plot()
+    ax = data['Close'].plot(lw=1)
+    ax.yaxis.set_major_locator(ticker.MultipleLocator( 100 * math.ceil(data['Close'].max().max() / 100)/10))
+    ax.grid(axis='y',linestyle='dotted', lw=0.5)
     plt.show()
 
 def plot_candles_and_delta_pips(data, verbosity, chart_title, recent_point_count=50, pips_lines=True, profit_line=3, losscut_line=300):

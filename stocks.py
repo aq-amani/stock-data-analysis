@@ -241,3 +241,22 @@ def plot_dividend_comparison(dividend_data, price_data):
     ax.yaxis.set_major_locator(ticker.MultipleLocator( 10 * math.ceil(max_value / 10)/20))
     ax.grid(axis='y',linestyle='dotted', lw=0.5)
     plt.show()
+
+def plot_multiple_candle_charts(ticker_list, base_filename):
+    """Plot multiple candle charts for comparison
+
+    Arguments:
+    ticker_list -- list of ticker names
+    base_filename -- common part of the CSV filename between tickers
+    """
+    #TODO: Decide base_filename assumptions
+    ticker_dataframe_list = []
+    for ticker in ticker_list:
+        ticker_dataframe_list.append(jp_investing_csv_to_data_frame(f'./data/{ticker}{base_filename}'))
+    data = pd.concat(ticker_dataframe_list, keys=ticker_list, axis=1)
+    fig, ax = plt.subplots(len(fx_list), 1, figsize=(12,8))
+
+    for idx, ticker in enumerate(ticker_list):
+        mpf.plot(data[ticker], type='candle', style=my_style, scale_width_adjustment=dict(candle=2), ax=ax[idx])
+        ax[idx].legend(labels=[ticker], loc='lower left')
+    plt.show()

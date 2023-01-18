@@ -36,15 +36,41 @@ def get_and_pickle_dividends(ticker_list):
         dividends = yf.Ticker(ticker).dividends
         pd.to_pickle(dividends, f'{ticker}_dividends.pkl')
 
-def get_and_pickle_ticker_history_data(ticker_list, output_file, period='max'):
-    data = yf.download(ticker_list, period)
-    pd.to_pickle(data, output_file)
+def get_and_pickle_ticker_history_data(ticker_list, output_file, period='max', interval='1d'):
+    """To process CSV data obtained from
+    https://jp.investing.com/currencies/usd-jpy-historical-data
 
+    Arguments:
+    ticker_list -- List of tickers of interest
+    output_file -- filename string of output pickle file
+    period -- Target period for the data to obtain
+      -- valid periods: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
+    interval -- Data verbosity (daily, hourly..etc)
+      -- valid intervals: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
+    """
+
+    data = yf.download(ticker_list, period=period, interval=interval)
+    pd.to_pickle(data, output_file)
 
 def plot_all_close_prices(pickle_file_name):
     data = pd.read_pickle(pickle_file_name)
     data['Close'].plot()
     plt.show()
+
+def get_single_ticker_data_from_pickle(pickle_file_name, ticker_name):
+    """For data containing multiple US stocks and ETFs that gets stored in multi-level dataframes
+       when obtained through yfinance
+
+    Arguments:
+    pickle_file_name -- filename string of the picklefile containing data
+    ticker_name -- name string of the ticker of interest
+    """
+    data = pd.read_pickle(pickle_file_name)
+    # Change hierarchy from values-> tickers to tickers->values
+    # To index by ticker name instead of price category (Open, Close..)
+    data.columns = data.columns.swaplevel(0, 1)
+    data.sort_index(axis=1, level=0, inplace=True)
+    return data[ticker_name]
 
 def plot_dividend_values(pickle_file_name):
     data = pd.read_pickle(pickle_file_name)

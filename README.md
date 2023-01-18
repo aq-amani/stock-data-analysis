@@ -1,2 +1,2 @@
-# stock-data
-Playing with stock, ETF and crypto data
+# About
+WIP project utilizing yfinance to play with financial data: stocks, ETFs, FX and crypto

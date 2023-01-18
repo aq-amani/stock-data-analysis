@@ -259,3 +259,52 @@ def plot_multiple_candle_charts(ticker_list, base_filename):
         mpf.plot(data[ticker], type='candle', style=my_style, scale_width_adjustment=dict(candle=2), ax=ax[idx])
         ax[idx].legend(labels=[ticker], loc='lower left')
     plt.show()
+
+## Obtaining data from sources
+##------------------------------
+## Either get CSVs from https://jp.investing.com
+## OR get data through yfinance (FX daily OC data is incorrect for at least USDJPY)
+## Note: FX Daily Open and Close values are borked in yfinance
+#period = '10y'
+#interval = '1d'
+#ticker_category = 'US_stocks'
+#ticker_list = stock_list
+#pickle_file_name = f'./data/{ticker_category}_P{period}_I{interval}_backfrom{date.today().strftime("%Y%m%d")}.pkl'
+#get_and_pickle_ticker_history_data(ticker_list, pickle_file_name, period=period, interval=interval)
+#data = pd.read_pickle(pickle_file_name)
+## For dividends
+#ticker_category = 'US_stocks_Dividends'
+#ticker_list = stock_list
+#pickle_file_name = f'./data/{ticker_category}_Pmax_Id_backfrom{date.today().strftime("%Y%m%d")}.pkl'
+#get_and_pickle_dividends(ticker_list, pickle_file_name)
+#data = pd.read_pickle(pickle_file_name)
+
+## Comparison line plots of close prices for multiple tickers
+## ----------------------------------------
+#data = pd.read_pickle('./data/US_stocks_P10y_I1d_backfrom20230119.pkl')
+#data = data.loc['2018-01-01':'2023-01-05']
+#plot_close_prices_comparison(data)
+
+## FX one currency candle and delta pips charts
+## -------------------------------------------
+#data = pd.read_pickle('./data/FX_USDJPY_20230109week_by_minute.pkl')
+#plot_candles_and_delta_pips(data, 'minute', 'daily FX', recent_point_count=50, pips_lines=True, profit_line=3, losscut_line=70)
+
+## Growth comparison chart
+## -------------------------
+#data = pd.read_pickle('./data/US_stocks_P10y_I1d_backfrom20230119.pkl')
+#growth_data = compare_growth(data)
+#plot_growth_comparison(growth_data)
+
+## Dividend comparison chart
+## ---------------------------
+#ticker_category = 'US_ETFs'
+#dividend_data = pd.read_pickle(f'./data/{ticker_category}_Dividends_Pmax_Id_backfrom20230119.pkl')
+#price_data = pd.read_pickle(f'./data/{ticker_category}_P10y_I1d_backfrom20230119.pkl')
+#dividend_data = dividend_data.loc['2013-01-01':'2023-01-01']
+#plot_dividend_comparison(dividend_data, price_data)
+
+## Multiple FX candle charts in parallel
+## --------------------------------------
+#fx_list = ['GBP', 'EUR', 'USD', 'NZD', 'AUD']
+#plot_multiple_candle_charts(fx_list, base_filename='_JPY_weekly_from20180101.csv')

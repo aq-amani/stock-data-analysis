@@ -36,11 +36,19 @@ def jp_investing_csv_to_data_frame(csv_file):
     return data
 
 
-def get_and_pickle_dividends(ticker_list):
-# can use period="1mo", interval = "1wk"
+def get_and_pickle_dividends(ticker_list, output_file):
+    """Get historical dividend data through yfinance and save pickle file
+
+    Arguments:
+    ticker_list -- List of tickers of interest
+    output_file -- filename string of output pickle file
+    """
+    ticker_dataframe_list = []
     for ticker in ticker_list:
-        dividends = yf.Ticker(ticker).dividends
-        pd.to_pickle(dividends, f'{ticker}_dividends.pkl')
+        ticker_dataframe_list.append(yf.Ticker(ticker).dividends)
+    data = pd.concat(ticker_dataframe_list, keys=ticker_list, axis=1)
+    data = data.fillna(0)
+    pd.to_pickle(data, output_file)
 
 def get_and_pickle_ticker_history_data(ticker_list, output_file, period='max', interval='1d'):
     """To process CSV data obtained from
@@ -222,14 +230,27 @@ def plot_growth_comparison(data):
     ax.grid(axis='y',linestyle='dotted', lw=0.5)
     plt.show()
 
-#plot_all_close_prices('./data/US_stocks_max.pkl')
-plot_dividend_values('./data/SPYD_dividends.pkl')
+def plot_dividend_comparison(dividend_data, price_data):
+    """Bar plot for multiple tickers comparing dividends over multiple periods
 
-# growth calc
-#start = int(data['Close'][0])
-#end = int(data['Close'][-1])
-#print(start)
-#print(end)
-#ratio = 100*(end/start)
-#growth = -1*(100 - ratio) if ratio < 100 else ratio - 100
-#print(f'{growth}%')
+    Arguments:
+    dividend_data -- datetime indexed dataframe
+    price_data -- datetime indexed dataframe
+    """
+    # TODO: separate calculation and plotting
+    # Group and sum dividend data by year
+    dividend_data = dividend_data.groupby(dividend_data.index.year).sum()
+    #dividend_data = dividend_data.fillna(0)
+    # Use the Close price as the denominator
+    price_data = price_data.xs('Close', axis=1, level=1, drop_level=True).groupby(price_data.index.year).mean()
+    # Group and get mean of price data by year (can consider max/min too for a best/worst case calculations)
+    #price_data = price_data.groupby(price_data.index.year).mean()
+    # Calculate dividend yield%
+    data = 100 * (dividend_data/ price_data)
+
+    ax = data.plot.bar(figsize=(14,8))
+    ax.legend(loc='upper right')
+    max_value = data.max().max()
+    ax.yaxis.set_major_locator(ticker.MultipleLocator( 10 * math.ceil(max_value / 10)/20))
+    ax.grid(axis='y',linestyle='dotted', lw=0.5)
+    plt.show()

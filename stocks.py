@@ -13,6 +13,9 @@ etf_list = ['VTI', 'QQQ', 'VIG', 'HDV', 'SPYD', 'VYM', 'VOO', 'SPY', 'IVV', 'BND
 # Get JP stock list
 JP_stocks = ['2897.T']
 FX = ['USDJPY=X']
+# Make custom candle chart style based on nightclouds style
+my_market_colors = mpf.make_marketcolors(up='r',down='g', wick={'up':'r','down':'g'})
+my_style = mpf.make_mpf_style(base_mpf_style='nightclouds', marketcolors=my_market_colors)
 
 def jp_investing_csv_to_data_frame(csv_file):
     """To process CSV data obtained from
@@ -110,9 +113,6 @@ def plot_candles_and_delta_pips(data, verbosity, chart_title, recent_point_count
 
     candle_width = 2
     pips_line_width = 0.8
-    # Making own style based on  nightclouds style
-    my_market_colors = mpf.make_marketcolors(up='r',down='g', wick={'up':'r','down':'g'})
-    my_style = mpf.make_mpf_style(base_mpf_style='nightclouds', marketcolors=my_market_colors)
 
     fig, ax = plt.subplots(3, 1, figsize=(12,8))
     fig.suptitle(f'{chart_title} latest {recent_point_count} points', fontsize=16)

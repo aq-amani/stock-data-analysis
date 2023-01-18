@@ -130,6 +130,25 @@ def plot_candles_and_delta_pips(data, verbosity, chart_title, recent_point_count
     fig.tight_layout()
     plt.show()
 
+def calculate_growth(data):
+## TODO: make start_end dates specifiable
+    start = int(data['Close'][0])
+    end = int(data['Close'][-1])
+    print(start)
+    print(end)
+    ratio = 100*(end/start)
+    growth = -1*(100 - ratio) if ratio < 100 else ratio - 100
+    print(f'{growth}%')
+
+def get_data_by_datetime_range(data, start_datetime, end_datetime):
+    """For datetime indexed dataframes. Returns entries in the specified datetime range
+
+    Arguments:
+    data -- datetime indexed dataframe
+    start_datetime -- string of range start datetime (ex.:'2022-01-01 09:00:00')
+    end_datetime -- string of range end datetime
+    """
+    return data.loc[start_datetime:end_datetime]
 
 #plot_all_close_prices('./data/US_stocks_max.pkl')
 plot_dividend_values('./data/SPYD_dividends.pkl')

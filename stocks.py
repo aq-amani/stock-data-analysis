@@ -84,12 +84,11 @@ def plot_close_prices_comparison(data):
     ax.grid(axis='y',linestyle='dotted', lw=0.5)
     plt.show()
 
-def plot_candles_and_delta_pips(data, verbosity, chart_title, recent_point_count=50, pips_lines=True, profit_line=3, losscut_line=300):
+def plot_candles_and_delta_pips(data, chart_title, recent_point_count=50, pips_lines=True, profit_line=3, losscut_line=300):
     """Plots 3 charts per ticker: Price candle chart and delta PIPs bars for Close-Open and High-Low prices
 
     Arguments:
     data -- dataframe with price information
-    verbosity -- string specifying data verbosity. Used to choose chart size settings ('week', 'minute', 'day')
     chart_title -- String to show on top of chart
     recent_point_count -- number of data points to plot counted backwards from the most recent data point
     pips_lines -- bool. Whether to plot lines specified by profit_line and losscut_line
@@ -97,14 +96,21 @@ def plot_candles_and_delta_pips(data, verbosity, chart_title, recent_point_count
     losscut_line -- Only when pips_lines is True.Specify value for the pips delta charts to plot a line at
     """
     data = data[-recent_point_count:-1]
-    bar_width = 0.0005 if verbosity == 'minute' else 3 if verbosity == 'week' else 0.5
-    price_major_tick_multiplier = 0.1 if verbosity == 'minute' else 5
-    price_minor_tick_multiplier = 0.05 if verbosity == 'minute' else 1
-    delta_major_tick_multiplier = 0.02 if verbosity == 'minute' else 2
-    delta_minor_tick_multiplier = 0.01 if verbosity == 'minute' else 0.5
+    oc_deltas = (data['Close'] - data['Open']) * 100 # yen to PIPs
+    peak_deltas = (data['High'] - data['Low']) * 100 # yen to PIPs
+    if pips_lines:
+        data[losscut_line] = losscut_line
+        data[profit_line] = profit_line
+    max_delta_value = peak_deltas.max()
+    max_price_range = data['High'].max() - data['Low'].min()
+    # Negative bars if the price decreased from Open to Close
+    peak_deltas = peak_deltas.where(oc_deltas > 0, peak_deltas * -1)
 
-    delta_major_tick_multiplier *= 100 # deltas in PIPs
-    delta_minor_tick_multiplier *= 100 # deltas in PIPs
+    # Chart settings
+    price_major_tick_multiplier = 10 * math.ceil(max_price_range / 10)/10
+    price_minor_tick_multiplier = price_major_tick_multiplier/2
+    delta_major_tick_multiplier = 100 * math.ceil(max_delta_value / 100)/5
+    delta_minor_tick_multiplier = delta_major_tick_multiplier/2
 
     candle_width = 2
     pips_line_width = 0.8
@@ -112,18 +118,11 @@ def plot_candles_and_delta_pips(data, verbosity, chart_title, recent_point_count
     fig, ax = plt.subplots(3, 1, figsize=(12,8))
     fig.suptitle(f'{chart_title} latest {recent_point_count} points', fontsize=16)
 
-    oc_deltas = (data['Close'] - data['Open']) * 100 # yen to PIPs
-    peak_deltas = (data['High'] - data['Low']) * 100 # yen to PIPs
-    if pips_lines:
-        data[losscut_line] = losscut_line
-        data[profit_line] = profit_line
-    # Negative bars if the price decreased from Open to Close
-    peak_deltas = peak_deltas.where(oc_deltas > 0, peak_deltas * -1)
     # ax[0] : Plot candle chart using custom style
     mpf.plot(data, type='candle', style=my_style, scale_width_adjustment=dict(candle=candle_width), ax=ax[0]) # can have figratio=(12,4) as an argument
 
     # ax[1] : Plot Open/Close deltas in PIPs
-    ax[1].bar(oc_deltas.index, oc_deltas.values, width=bar_width)
+    ax[1].stem(oc_deltas.index, oc_deltas.values, markerfmt=" ", basefmt=" ")
     if pips_lines:
         ax[1].plot(data[profit_line], lw=pips_line_width, c='r', linestyle='dashed', label=f'±{profit_line} PIPs')
         ax[1].plot(-1*data[profit_line], lw=pips_line_width, c='r', linestyle='dashed')
@@ -134,7 +133,7 @@ def plot_candles_and_delta_pips(data, verbosity, chart_title, recent_point_count
     ax[1].set_ylabel('OC deltas (PIPs)')
 
     # ax[2] : Plot Max/Min deltas in PIPs
-    ax[2].bar(peak_deltas.index, peak_deltas.values, width=bar_width)
+    ax[2].stem(peak_deltas.index, peak_deltas.values, markerfmt=" ", basefmt=" ")
     if pips_lines:
         ax[2].plot(data[profit_line], lw=pips_line_width, c='r', linestyle='dashed', label=f'±{profit_line} PIPs')
         ax[2].plot(-1*data[profit_line], lw=pips_line_width, c='r', linestyle='dashed')
@@ -288,8 +287,9 @@ def plot_multiple_candle_charts(ticker_list, base_filename):
 
 ## FX one currency candle and delta pips charts
 ## -------------------------------------------
-#data = pd.read_pickle('./data/FX_USDJPY_20230109week_by_minute.pkl')
-#plot_candles_and_delta_pips(data, 'minute', 'daily FX', recent_point_count=50, pips_lines=True, profit_line=3, losscut_line=70)
+#data = pd.read_pickle('./data/USD_JPY_P6mo_I1h_backfrom20230119.pkl')
+#data = jp_investing_csv_to_data_frame(f'./data/USD_JPY_weekly_from20180101.csv')
+#plot_candles_and_delta_pips(data, 'title here', recent_point_count=50, pips_lines=False, profit_line=3, losscut_line=70)
 
 ## Growth comparison chart
 ## -------------------------

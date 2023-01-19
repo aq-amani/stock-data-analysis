@@ -6,6 +6,7 @@ import pandas as pd
 from datetime import date, timedelta
 from dateutil.relativedelta import *
 import math
+import re
 plt.style.use('dark_background')
 
 stock_list = ['AAPL', 'MSFT', 'TSLA', 'KO', 'INTC', 'AMZN', 'AMD', 'PG', 'META', 'NVDA', 'GOOG', 'JNJ', 'MRNA', 'PEP', 'WMT']
@@ -174,23 +175,23 @@ def calculate_growth(data, start_datetime, end_datetime):
     growth = -1*(100 - ratio) if ratio < 100 else ratio - 100
     return growth
 
-def compare_growth(data):
-    """Calculate percentage of growth within the past years and months calculated from today
+def get_multi_period_growth(data, period_list = ['5y', '3y', '1y', '6mo', '3mo', '1mo']):
+    """Calculate percentage of growth from <period> years/months ago up until today
 
     Arguments:
     data -- datetime indexed dataframe containing ticker price data
+    period_list -- list of periods (strings like '1y', '3mo') from which to start growth calculation
     """
-    # TODO: can be made more dynamic by passing the periods list as an argument
     ticker_list = list(data.columns.levels[0])
-    growth_data = pd.DataFrame(columns=ticker_list, index=['5y', '3y', '1y', '6mo', '3mo', '1mo'])
+    growth_data = pd.DataFrame(columns=ticker_list, index= period_list)
     today = date.today()
     for ticker in ticker_list:
-        growth_data.loc['5y'][ticker]= calculate_growth(data[ticker], today - relativedelta(years=5), today)
-        growth_data.loc['3y'][ticker]= calculate_growth(data[ticker], today - relativedelta(years=3), today)
-        growth_data.loc['1y'][ticker]= calculate_growth(data[ticker], today - relativedelta(years=1), today)
-        growth_data.loc['6mo'][ticker] = calculate_growth(data[ticker], today - relativedelta(months=6), today)
-        growth_data.loc['3mo'][ticker] = calculate_growth(data[ticker], today - relativedelta(months=3), today)
-        growth_data.loc['1mo'][ticker] = calculate_growth(data[ticker], today - relativedelta(months=1), today)
+        for p in period_list:
+            period = int(re.findall(r'\d+', p)[0])
+            if 'y' in p:
+                growth_data.loc[p][ticker]= calculate_growth(data[ticker], today - relativedelta(years=period), today)
+            elif 'mo' in p:
+                growth_data.loc[p][ticker]= calculate_growth(data[ticker], today - relativedelta(months=period), today)
     return growth_data
 
 def get_yearly_growth(data, year_count=5):
@@ -224,7 +225,7 @@ def plot_growth_comparison(data):
     """Bar plot for multiple tickers comparing growth over multiple periods
 
     Arguments:
-    data -- datetime indexed dataframe fo growth percentages
+    data -- datetime indexed dataframe for growth percentages
     """
     ax = data.plot.bar(figsize=(14,8))
     ax.legend(loc='upper right')
@@ -244,10 +245,8 @@ def plot_dividend_comparison(dividend_data, price_data):
     # Group and sum dividend data by year
     dividend_data = dividend_data.groupby(dividend_data.index.year).sum()
     #dividend_data = dividend_data.fillna(0)
-    # Use the Close price as the denominator
+    # Group and get mean of Close price data by year (can consider max/min too for a best/worst case calculations)
     price_data = price_data.xs('Close', axis=1, level=1, drop_level=True).groupby(price_data.index.year).mean()
-    # Group and get mean of price data by year (can consider max/min too for a best/worst case calculations)
-    #price_data = price_data.groupby(price_data.index.year).mean()
     # Calculate dividend yield%
     data = 100 * (dividend_data/ price_data)
 
@@ -323,7 +322,7 @@ def plot_growth_and_dividends(growth_data, dividend_data):
 ## Growth comparison chart
 ## -------------------------
 #data = pd.read_pickle('./data/US_stocks_P10y_I1d_backfrom20230119.pkl')
-#growth_data = compare_growth(data)
+#growth_data = get_multi_period_growth(data)
 #plot_growth_comparison(growth_data)
 
 ## Dividend comparison chart

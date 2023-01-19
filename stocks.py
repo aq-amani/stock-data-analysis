@@ -193,6 +193,23 @@ def compare_growth(data):
         growth_data.loc['1mo'][ticker] = calculate_growth(data[ticker], today - relativedelta(months=1), today)
     return growth_data
 
+def get_yearly_growth(data, year_count=5):
+    """Calculate percentage of yearly growth one year at a time starting (year_count) years ago up until this year
+
+    Arguments:
+    data -- datetime indexed dataframe containing ticker price data
+    year_count -- Number of 1 year intervals counting backwards on which to calculate growth
+    """
+    today = date(date.today().year, 1, 1)
+    ticker_list = list(data.columns.levels[0])
+    index_list =[(today-relativedelta(years=i+1)).year for i in range(year_count)]
+    growth_data = pd.DataFrame(columns=ticker_list, index=index_list)
+    for ticker in ticker_list:
+        for idx, year in enumerate(index_list):
+            growth_data.loc[year][ticker]= calculate_growth(data[ticker], today - relativedelta(years=idx+1), today - relativedelta(years=idx))
+    growth_data = growth_data.iloc[::-1]
+    return growth_data
+
 def get_data_by_datetime_range(data, start_datetime, end_datetime):
     """For datetime indexed dataframes. Returns entries in the specified datetime range
 
@@ -260,6 +277,18 @@ def plot_multiple_candle_charts(ticker_list, base_filename):
         ax[idx].legend(labels=[ticker], loc='lower left')
     plt.show()
 
+def plot_growth_and_dividends(growth_data, dividend_data):
+    """Plot both gorwth and dividend yield in one screen
+
+    Arguments:
+    growth_data -- gorwth dataframe
+    dividend_data -- dividend dataframe
+    """
+    data = growth_data * dividend_data
+    data = data.where(growth_data > 0, growth_data/dividend_data)
+    data.plot.bar()
+    plt.show()
+
 ## Obtaining data from sources
 ##------------------------------
 ## Either get CSVs from https://jp.investing.com
@@ -304,6 +333,19 @@ def plot_multiple_candle_charts(ticker_list, base_filename):
 #price_data = pd.read_pickle(f'./data/{ticker_category}_P10y_I1d_backfrom20230119.pkl')
 #dividend_data = dividend_data.loc['2013-01-01':'2023-01-01']
 #plot_dividend_comparison(dividend_data, price_data)
+
+## Dividend and Growth comparison
+## ------------------------------
+ticker_category = 'US_ETFs'
+dividend_data = pd.read_pickle(f'./data/{ticker_category}_Dividends_Pmax_Id_backfrom20230119.pkl')
+growth_data = pd.read_pickle(f'./data/{ticker_category}_P10y_I1d_backfrom20230119.pkl')
+growth_data = get_yearly_growth(growth_data)
+dividend_data = dividend_data.loc['2018-01-01':'2023-01-01']
+dividend_data = dividend_data.groupby(dividend_data.index.year).sum()
+plot_growth_and_dividends(growth_data, dividend_data)
+print(growth_data.head(5))
+print(dividend_data.head(5))
+print(growth_data * dividend_data)
 
 ## Multiple FX candle charts in parallel
 ## --------------------------------------

@@ -78,8 +78,9 @@ def plot_close_prices_comparison(data):
     ticker_list -- list of ticker names
     base_filename -- common part of the filename between tickers
     """
-    ax = data['Close'].plot(lw=1)
-    ax.yaxis.set_major_locator(ticker.MultipleLocator( 100 * math.ceil(data['Close'].max().max() / 100)/10))
+    data = data.xs('Close', axis=1, level=1, drop_level=True)
+    ax = data.plot(lw=1)
+    ax.yaxis.set_major_locator(ticker.MultipleLocator( 100 * math.ceil(data.max().max() / 100)/10))
     ax.grid(axis='y',linestyle='dotted', lw=0.5)
     plt.show()
 
